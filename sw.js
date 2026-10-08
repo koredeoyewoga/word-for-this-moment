@@ -1,7 +1,7 @@
 /* Word for This Moment — service worker.
    Caches the app itself so it opens fast and works without signal.
    Only this site's own files are cached; visit counters and fonts always come from the network. */
-const CACHE = 'wftm-v2';
+const CACHE = 'wftm-v3';
 const CORE = ['./', './index.html', './manifest.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
