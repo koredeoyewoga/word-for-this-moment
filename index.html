@@ -324,6 +324,17 @@ footer{line-height:1.6}
 .ios-steps{margin:10px 0 0;padding-left:1.2em;color:var(--text);font-size:.92rem}
 .ios-steps li{margin:4px 0}
 .share-ic{display:inline-block;width:16px;height:16px;vertical-align:-2px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* daily word sign-up */
+.daily{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;margin:0 0 30px;box-shadow:var(--shadow)}
+.daily h3{margin:0 0 4px}
+.daily p{margin:0 0 14px;color:var(--muted);font-size:.95rem}
+.daily .opts{display:grid;gap:8px}
+.daily .opt{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 14px;border:1px solid var(--line);border-radius:14px;background:var(--page);color:var(--text);font-weight:600;text-decoration:none;text-align:left;width:100%}
+.daily .opt svg{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;color:var(--ribbon)}
+.daily .opt small{display:block;font-weight:500;color:var(--muted);font-size:.82rem}
+.daily .opt[aria-pressed="true"]{border-color:var(--wordbg)}
+.daily .note{margin:10px 0 0;font-size:.88rem}
 </style>
 </head>
 <body>
@@ -377,8 +388,20 @@ footer{line-height:1.6}
     <div id="quickWrap"><p class="hint" style="margin-bottom:8px">Or start here:</p><div class="row" id="quickRow" style="margin-bottom:22px"></div></div>
     <button class="crisis" id="crisis"><svg class="pi" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="m5.6 5.6 3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg><span>Struggling to stay safe? <b>Get help now</b> — Samaritans 116 123, free, any time.</span></button>
     <section class="word" id="wordCard"></section>
+    <section class="daily" id="dailyBox" hidden aria-labelledby="dailyH">
+      <h3 id="dailyH">Get the daily word</h3>
+      <p>A verse and declaration each morning at about 7am. Free — choose how you’d like it.</p>
+      <div class="opts">
+        <button class="opt" type="button" id="dPush" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg><span><span id="dPushT">Phone notification</span><small id="dPushS">A gentle alert from the app</small></span></button>
+        <a class="opt" id="dEmail" hidden target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg><span>Email<small>Sign up with your email address</small></span></a>
+        <a class="opt" id="dSms" hidden target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Text message<small>Sign up with your mobile number</small></span></a>
+        <a class="opt" id="dWa" hidden target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 0 1-11.8 7L4 20l1-4.1A8 8 0 1 1 20 12z"/></svg><span>WhatsApp channel<small>Follow the channel in WhatsApp</small></span></a>
+        <a class="opt" id="dTg" hidden target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 4-18 7 6 2 2 6 3-4 5 4z"/><path d="m9 13 8-6"/></svg><span>Telegram channel<small>Join the channel in Telegram</small></span></a>
+      </div>
+      <p class="note" id="dNote" role="status" aria-live="polite"></p>
+    </section>
     <div id="list"></div>
-    <p class="empty" id="none" hidden>Nothing matches those words. Try a simpler word like "worry", "sick" or "alone", or press search.</p>
+    <p class="empty" id="none" hidden>No exact match — here are all the situations. Tap any one that feels close.</p>
     <section class="how">
       <img class="howimg" data-img="pray_man" alt="" width="960" height="540">
       <h3>A simple way to pray</h3>
@@ -647,24 +670,215 @@ async function ai(task,body){
 const aiErr=e=>`<p class="loading">${e.message==='off'?'This feature needs to be switched on by the app owner (an AI key is not set up yet).':'Something went wrong. Check your connection and try again.'}</p>`;
 
 /* ---------- home ---------- */
+/* ---------- smart search: everyday words, phrases, typos, word endings (no AI, works offline) ---------- */
+const Search=(()=>{
+  const L=`help helpme helping:GENERIC
+worry worried worrying worries anxious anxiety anxieties nervous nerves uneasy tense panic panicking panicky overthinking overthink fret fretting:anxiety5
+stress stressed stressful pressure pressured:anxiety4 overwhelmed4
+scared scary afraid fear fears fearful frightened terrified terror dread dreading phobia:fear5 anxiety2
+overwhelmed overwhelming swamped drowning crisis burden burdened chaos chaotic cope coping:overwhelmed5
+sad sadness down low depressed depression hopeless hopelessness empty numb heavy heaviness darkness gloomy miserable unhappy despair:depression5
+cry crying cried tears weeping:depression3 grief3
+broken brokenhearted heartbroken heartbreak:grief3 depression3 divorce2
+hope hopeful:depression2 disappointment2 waiting2 faith2
+comfort comforted:grief3 depression2 lonely2
+suicide suicidal:suicidal10
+alone lonely loneliness isolated isolation nobody friendless forgotten friends friend:lonely5
+abandoned:lonely3 rejection3
+unloved:love4 rejection2 lonely2
+angry anger mad furious rage raging annoyed irritated frustrated frustration temper:anger5
+bitter bitterness resentment resentful grudge:forgiving4 anger3
+shame ashamed embarrassed embarrassment humiliated humiliation disgrace unworthy dirty:shame5
+rejected rejection unwanted excluded ignored:rejection5
+dumped:rejection3 divorce2 singleness2
+jealous jealousy envy envious compare comparing comparison covet:jealousy5
+trauma traumatic traumatised traumatized flashback flashbacks memories wounded wounds ptsd abuse_past:trauma5
+nightmare nightmares dreams:sleep3 warfare2 trauma2
+peace peaceful calm quiet stillness rest:peace5
+restless:peace3 anxiety3
+sleep sleeping sleepless insomnia awake night nights bed:sleep5
+sick sickness ill illness disease unwell healing heal healed health healthy covid flu infection fever virus treatment medicine medication chemo:healing5
+hospital doctor surgery operation:healing4 diagnosis3
+cancer tumour tumor stroke heart diabetes:healing5 diagnosis2
+pain painful chronic disability disabled arthritis aches ache condition:chronic5 healing2
+results scan biopsy diagnosis diagnosed appointment tests:diagnosis5
+infertility infertile barren ivf conceive conceiving:fertility5
+miscarriage miscarried stillbirth:fertility5 grief4
+baby babies:fertility3 pregnancy3
+pregnant pregnancy expecting birth labour labor delivery midwife newborn:pregnancy5
+addiction addicted alcohol alcoholic drinking drunk drugs drug gambling betting porn pornography smoking vaping weed cocaine hooked craving cravings relapse:addiction5
+tired weary exhausted exhaustion weak weakness drained burnout fatigue fatigued strength strong energy:strength5
+mercy grace pity compassion:mercy5
+guilt guilty sin sinned sins wrongdoing repent repentance confess confession conscience sorry:forgiveness5
+doubt doubts doubting unbelief believe belief faith faithless questioning:faith5
+tempted temptation tempting lust lustful urges:temptation5
+attack attacked spiritual warfare devil satan demon demons demonic witchcraft witch evil oppression oppressed:warfare5
+curse cursed:patterns4 warfare4
+pattern patterns cycle cycles generational repeating repeat stronghold strongholds:patterns5
+habit habits:patterns3 addiction3
+stuck:patterns3 waiting3
+distant far dry disconnected:far5
+backslide backslidden backsliding drifted drifting strayed return returning:returning5
+saved salvation born christian believer convert:salvation5
+love loved loving:love4
+thanks thank thankful grateful gratitude praise praising worship happy joy joyful rejoice glad:gratitude5
+blessed blessing blessings:gratitude3 favour3
+breakthrough answered testimony celebrate celebration victory miracle miracles:breakthrough5
+direction guidance guide decide decision decisions choice choose confused confusion unsure crossroads path:guidance5
+future uncertain uncertainty unknown:guidance4 anxiety4 fear2
+wisdom wise:guidance3 exams2
+lost:grief3 guidance3 joblost2
+door doors opportunity opportunities closed opening:doors5
+waiting wait patience patient delay delayed slow longing:waiting5
+fail failed failing failure setback mess messed loser mistake mistakes:failure5
+fresh start restart beginning beginnings again:newbeginnings5
+purpose worth identity calling meaning insecure insecurity confidence selfesteem:purpose5
+worthless useless:purpose4 depression3
+work job career boss manager colleagues colleague coworker office workplace:work5
+interview interviews:joblost3 work3 doors2
+promotion:favour4 work3
+unemployed redundant redundancy fired sacked jobless laid:joblost5
+business company startup entrepreneur customers clients shop sales:business5
+money finance finances financial broke poor poverty bills rent food provision provide afford lack salary income cash:provision5
+debt debts loan loans owe owing credit overdraft arrears bankrupt bankruptcy:debt5
+mortgage:debt3 provision3
+exam exams study studying school college university uni revision grades assignment:exams5
+test:exams3 diagnosis3
+favour favor success successful:favour5
+moving move relocate relocating abroad immigrant immigration visa homesick:moving5
+travel travelling traveling journey trip flight:protection4 moving3
+unfair injustice court case lawsuit legal lawyer judge justice police accused:injustice5
+marriage married husband wife spouse wedding:marriage5
+single singleness dating partner boyfriend girlfriend soulmate:singleness5
+relationship:marriage3 singleness3
+divorce divorced separated separation breakup ex:divorce5
+children child kids kid son daughter parenting parent teenager teen toddler:children5
+prodigal wayward rebellious astray runaway:prodigal5
+family parents mother mum mom father dad siblings brother sister relatives home:family5
+betrayed betrayal cheated cheating lied liar backstabbed unfaithful affair:betrayal5
+forgive forgiving hurt offended:forgiving5
+abuse abused abusive violence violent beaten controlling domestic:abuse5
+trial trials hardship suffering struggle struggling difficult hard tough storm:trials5
+disappointed disappointment letdown unanswered:disappointment5
+enemy enemies opposition persecuted persecution bully bullied bullying gossip hate hated hates:enemies5
+protect protection safety safe danger dangerous covering:protection5
+old age aging ageing elderly retired retirement:aging5
+dying terminal hospice:death5
+death:death3 grief4
+grief grieving bereaved bereavement died passed funeral loss mourning widow widowed widower:grief5`;
+  const STOPW=new Set('and the feel feeling felt my mine im about with for have has been really very just like that this you your what when how why want today right now am are was its so too lot all get got some can cant could would should will been from into out over them they their there then than also our ours his her him she very much more most when where which who whom been being did does doing done going gonna wanna make made keep kept keeps still even ever every one two try trying tried thing things stuff tomorrow yesterday tonight week weeks day days time times people person someone everyone everything always know think thought happening happen happens happened life little bit said says tell told see saw look give take well yes yeah okay also anymore find found falling fall apart left leave come came went way put mind'.split(' '));
+  const LEX={};
+  L.split('\n').forEach(line=>{const [ws,ts]=line.split(':');const hits=ts.trim().split(/\s+/).map(x=>x==='GENERIC'?['GENERIC',0]:[x.replace(/\d+$/,''),+x.match(/\d+$/)[0]]);
+    ws.trim().split(/\s+/).forEach(w=>{LEX[w]=(LEX[w]||[]).concat(hits)})});
+  const T={};FLAT.forEach(s=>{T[s.id]=s;
+    const add=(txt,wt)=>String(txt||'').toLowerCase().split(/[^a-z]+/).forEach(w=>{if(w.length>2&&!STOPW.has(w))LEX[w]=(LEX[w]||[]).concat([[s.id,wt]])});
+    add(s.name,4);add(s.keys,3);add(s.sub,1)});
+  const PHRASES=[
+    [/\b(lost|losing) (my )?(job|work)\b|\bmade redundant\b|\bout of work\b|\bneed (a )?job\b|\blooking for (a )?(job|work)\b|\bjob (search|hunt|hunting)\b/,[['joblost',9]]],
+    [/\b(lost|losing) my (mum|mom|mother|dad|father|husband|wife|son|daughter|brother|sister|friend|grandma|grandad|granny|grandmother|grandfather|baby|child|partner)\b|\bpassed away\b|\b(mum|mom|dad|mother|father|husband|wife|son|daughter|friend) (died|passed)\b/,[['grief',10]]],
+    [/\bcan'?t sleep\b|\bcannot sleep\b|\bfall asleep\b|\bstay asleep\b/,[['sleep',9]]],
+    [/\bfeel(ing)? (so |all )?alone\b|\bno ?one cares\b|\bnobody cares\b|\bno friends\b/,[['lonely',9]]],
+    [/\bnobody loves me\b|\bno ?one loves me\b|\bnot loved\b/,[['love',8],['lonely',5]]],
+    [/\bforgive (him|her|them|my|someone|people)\b|\bcan'?t forgive\b/,[['forgiving',14]]],
+    [/\bforgive me\b|\bi('?ve| have) sinned\b|\bfeel guilty\b/,[['forgiveness',9]]],
+    [/\btest results?\b|\bwaiting (for|on) (my |the )?results\b|\bscan results?\b/,[['diagnosis',9]]],
+    [/\bneed (direction|guidance|wisdom)\b|\bwhat to do\b|\bwhich way\b|\bdon'?t know what\b|\bwhat should i do\b/,[['guidance',7]]],
+    [/\bthank (you )?(god|lord|jesus)\b|\b(i'?m|i am|feeling|so) (grateful|thankful|happy|blessed)\b/,[['gratitude',8]]],
+    [/\bfar from god\b|\bgod (feels|seems) (far|distant|silent)\b|\bcan'?t feel god\b/,[['far',9]]],
+    [/\b(closed|open) doors?\b|\bnew job\b/,[['doors',8]]],
+    [/\bsame (thing|mistakes?|problem) (again|over)\b|\bkeeps? happening\b|\bhappens again\b/,[['patterns',8]]],
+    [/\bmy (marriage|husband|wife)\b/,[['marriage',7]]],
+    [/\b(wife|husband|partner|boyfriend|girlfriend) (left|walked out|wants a divorce)\b|\bleft me\b/,[['divorce',10],['rejection',4]]],
+    [/\bmy (son|daughter|kids|children|child|baby|teenager)\b/,[['children',6]]],
+    [/\bpanic attacks?\b/,[['anxiety',9]]],
+    [/\bnot good enough\b|\bnot enough\b|\bno purpose\b|\bwhat'?s the point of me\b/,[['purpose',7]]],
+    [/\bno money\b|\bcan'?t (afford|pay)\b|\bnot enough money\b|\bshort of money\b/,[['provision',9],['debt',4]]],
+    [/\bcan'?t cope\b|\btoo much\b|\bfalling apart\b/,[['overwhelmed',8]]],
+    [/\bgive up\b|\bgiving up\b|\bno hope\b/,[['depression',6],['trials',4]]],
+    [/\bwant a baby\b|\btrying for a baby\b|\btrying to conceive\b/,[['fertility',9]]],
+    [/\bmoving (house|home|country|abroad)\b|\bnew (country|city|town|home)\b/,[['moving',8]]],
+    [/\bspiritual attack\b|\bunder attack\b/,[['warfare',9]]],
+    [/\bcome back to god\b|\breturn to god\b|\bwalked away from god\b/,[['returning',9]]],
+    [/\bknow (god|jesus)\b|\bbecome a christian\b|\bget saved\b|\bborn again\b/,[['salvation',9]]],
+    [/\bgetting old\b|\bold age\b/,[['aging',9]]],
+    [/\bcar accident\b|\baccident\b/,[['trauma',5],['protection',4],['healing',3]]]
+  ];
+  const DANGER=/\b(kill(ing)? (my ?self|me)|end(ing)? (my|it all|my life)|suicid\w*|want(ed)? to die|wanna die|wish i (was|were) dead|don'?t want to (be here|live|wake up|be alive)|take my (own )?life|hurt(ing)? myself|harm(ing)? myself|self[- ]?harm|cut(ting)? myself|not worth living|better off (dead|without me)|no reason to live)\b/i;
+  const UNSAFE=/\b(not safe at home|unsafe at home|scared of (my )?(husband|wife|partner|boyfriend|girlfriend|dad|father|mum|mother)|(he|she|they|partner|husband|wife|boyfriend|girlfriend|dad|mum) (hits?|beats?|hurts?|chokes?|threatens?|abuses?) me|being abused|abusing me)\b/i;
+  const NEG=new Set(['not','no','never',"isn't","aren't","don't",'dont',"didn't",'without',"wasn't",'nothing']);
+  const FEEL=new Set(['anxious','worried','scared','afraid','sad','depressed','angry','alone','lonely','stressed','tired','sick','ill','nervous','guilty','ashamed','jealous','bitter','lost','confused','hopeless','overwhelmed']);
+  const GENERIC=new Set(['help','helpme','pray','prayer','prayers','praying','god','jesus','lord','christ','bible','verse','verses','word','words','scripture','scriptures','please','need','something','anything','encourage','encouragement','strength_needed']);
+  const STARTERS=['overwhelmed','strength','guidance','peace','protection','mercy','provision','healing'];
+  function lev(a,b){if(Math.abs(a.length-b.length)>2)return 9;const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++){if(!i){d[i][j]=j;continue}
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])d[i][j]=Math.min(d[i][j],d[i-2][j-2]+1)}}return d[a.length][b.length]}
+  const squash=w=>w.replace(/(.)\1+/g,'$1');
+  let VOCAB=null;
+  function stems(w){const out=[w];
+    [['iness','y'],['ies','y'],['ied','y'],['ying','y'],['ness',''],['ment',''],['fully',''],['ful',''],['ingly',''],['ing',''],['edly',''],['ed',''],['ly',''],['es',''],['s',''],['er',''],['est','']].forEach(([s,r])=>{if(w.length>s.length+2&&w.endsWith(s))out.push(w.slice(0,-s.length)+r)});
+    out.slice().forEach(x=>{if(/([b-df-hj-np-tv-z])\1$/.test(x))out.push(x.slice(0,-1))});return out}
+  function lookup(w,isLast){
+    for(const s of stems(w))if(LEX[s])return{hits:LEX[s],as:s===w?null:null};
+    VOCAB=VOCAB||Object.keys(LEX);
+    // typos: allow 1 slip (2 for long words); also forgive doubled letters
+    if(w.length>=4){let best=null,bd=9;const sw=squash(w);
+      for(const v of VOCAB){if(Math.abs(v.length-w.length)>2)continue;const d=Math.min(lev(w,v),lev(sw,squash(v))+0.5);if(d<bd){bd=d;best=v}}
+      if(best&&bd<=(w.length>=7?2:1))return{hits:LEX[best],as:best}}
+    // still typing: "anx" -> anxiety
+    if(isLast&&w.length>=3){const v=(VOCAB.filter(x=>x.startsWith(w)).sort((a,b)=>a.length-b.length))[0];if(v)return{hits:LEX[v],as:v,partial:true}}
+    return null}
+  function run(q){
+    const text=String(q||'').toLowerCase().replace(/[’‘`]/g,"'").trim();
+    const score={},add=(id,w)=>{if(T[id])score[id]=(score[id]||0)+w};
+    const danger=DANGER.test(text),unsafe=UNSAFE.test(text);
+    PHRASES.forEach(([re,h])=>{if(re.test(text))h.forEach(([id,w])=>add(id,w))});
+    const words=text.replace(/[^a-z' ]/g,' ').replace(/'/g,'').split(/\s+/).filter(Boolean);
+    let generic=false;const fixed=[];
+    words.forEach((w,i)=>{
+      if(GENERIC.has(w)||w==='helpme'){generic=true;return}
+      if(STOPW.has(w)||w.length<3)return;
+      if(FEEL.has(w)&&[words[i-1],words[i-2]].some(p=>NEG.has(p)))return;
+      const r=lookup(w,i===words.length-1);if(!r)return;
+      if(r.as&&!r.partial)fixed.push([w,r.as]);
+      r.hits.forEach(([id,wt])=>{if(id==='GENERIC')generic=true;else add(id,r.partial?wt*0.8:wt)})});
+    if(danger)score.suicidal=100;if(unsafe)score.abuse=(score.abuse||0)+90;
+    const ranked=Object.entries(score).sort((a,b)=>b[1]-a[1]);const top=ranked.length?ranked[0][1]:0;
+    let results=ranked.filter(([,s])=>s>=Math.max(2,top*0.3)).slice(0,8).map(([id])=>T[id]);
+    const startersOnly=!results.length&&generic;
+    if(startersOnly)results=STARTERS.map(id=>T[id]).filter(Boolean);
+    return{results,danger,unsafe,generic:startersOnly,fixed}}
+  return{run};
+})();
+
+function topicBtns(list,cls){return list.map(s=>`<button class="${cls}" data-id="${s.id}">${cls==='sit'?`<b>${esc(s.name)}</b><span>${esc(s.sub)}</span>`:esc(s.name)}</button>`).join('')}
+function fullList(){return DATA.map(g=>`<h2 class="grp">${esc(g.name)}</h2><div class="list">`+topicBtns(g.items,'sit')+'</div>').join('')}
 function renderList(q=''){
-  q=q.trim().toLowerCase();const words=toWords(q);let html='',n=0;
-  DATA.forEach(g=>{const items=g.items.filter(s=>{if(!q)return true;const hay=(s.name+' '+s.sub+' '+s.keys).toLowerCase();return hay.includes(q)||words.some(w=>hay.includes(w))});n+=items.length;
-    if(items.length)html+=`<h2 class="grp">${esc(g.name)}</h2><div class="list">`+items.map(s=>`<button class="sit" data-id="${s.id}"><b>${esc(s.name)}</b><span>${esc(s.sub)}</span></button>`).join('')+'</div>'});
-  $('list').innerHTML=html;$('none').hidden=n>0;$('quickWrap').hidden=!!q;
+  const raw=q.trim();
+  if(!raw){$('list').innerHTML=fullList();$('none').hidden=true;$('quickWrap').hidden=false;return}
+  const r=Search.run(raw);let html='';
+  if(r.results.length){
+    html+=`<h2 class="grp">${r.generic?'Good places to start':'Best matches'}</h2>`;
+    if(r.fixed.length)html+=`<p class="hint" style="margin:-4px 0 10px">Showing results for ${r.fixed.map(f=>'“'+esc(f[1])+'”').join(', ')}</p>`;
+    html+=`<div class="list">${topicBtns(r.results,'sit')}</div><h2 class="grp" style="margin-top:34px">All situations</h2>`;
+  }
+  html+=DATA.map(g=>`<div class="list" style="margin-bottom:10px">`+topicBtns(g.items,'sit')+'</div>').join('');
+  $('list').innerHTML=r.results.length?html:fullList();$('none').hidden=!!r.results.length;$('quickWrap').hidden=!!r.results.length;
 }
-async function findHelp(){
-  const q=$('q').value.trim();if(!q)return;
-  const sug=$('suggest');sug.hidden=false;$('sugTitle').textContent='Finding the right words for you…';$('sugRow').innerHTML='';
-  let ids=[];
-  try{const j=await ai('match',{text:q,list:FLAT.map(s=>s.id+': '+s.name).join('\n')});ids=(j.ids||[]).filter(id=>FLAT.some(s=>s.id===id))}catch(e){}
-  if(!ids.length){const words=toWords(q);ids=FLAT.map(s=>{const hay=(s.name+' '+s.sub+' '+s.keys).toLowerCase();return[s.id,words.filter(w=>hay.includes(w)).length]}).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0])}
-  if(/suicid|kill myself|end it all|want to die|self.?harm|hurt myself/i.test(q)&&!ids.includes('suicidal'))ids.unshift('suicidal');
-  $('sugTitle').textContent=ids.length?'This might help:':'I couldn\'t match that. Choose from the list below.';
-  $('sugRow').innerHTML=ids.map(id=>{const s=FLAT.find(x=>x.id===id);return`<button class="quick hot" data-id="${id}">${esc(s.name)}</button>`}).join('');
+function showSuggest(q,final){
+  const raw=q.trim(),sug=$('suggest');
+  if(!raw||(!final&&raw.length<3)){sug.hidden=true;return}
+  final=true;
+  const r=Search.run(raw);sug.hidden=false;
+  if(r.results.length){
+    $('sugTitle').textContent=r.danger?'Please don’t face this alone. Start here:':r.generic?'Here are some good places to start:':'This might help:';
+    $('sugRow').innerHTML=topicBtns(r.results.slice(0,r.generic?8:5),'quick hot');
+  }else{
+    $('sugTitle').textContent=final?'No match yet. Try a simple word like “worry”, “sick”, “money” or “alone” — or tap one of these:':'Keep typing…';
+    $('sugRow').innerHTML=final?topicBtns(['anxiety','strength','guidance','healing','provision','peace'].map(id=>FLAT.find(s=>s.id===id)),'quick'):'';
+  }
 }
+function findHelp(){if(typeof sTimer!=='undefined')clearTimeout(sTimer);const q=$('q').value;showSuggest(q,true);renderList(q)}
 $('askForm').onsubmit=e=>{e.preventDefault();findHelp()};
-$('q').addEventListener('input',e=>{renderList(e.target.value);if(!e.target.value)$('suggest').hidden=true});
+let sTimer;$('q').addEventListener('input',e=>{clearTimeout(sTimer);const v=e.target.value;sTimer=setTimeout(()=>{showSuggest(v,false);renderList(v)},120)});
 let wordRef=null;
 function wordOfMoment(keep){
   const refs=[...new Set(FLAT.flatMap(s=>s.verses.slice(0,6).map(v=>v.ref)))];const v=(keep&&ALL[wordRef])||ALL[refs[Math.floor(Math.random()*refs.length)]];wordRef=v.ref;
@@ -816,6 +1030,41 @@ hitOnce('visitors',true);hitOnce(dayKey(new Date()));
   link.onclick=()=>{location.hash='';setTimeout(()=>{if(isIOS)showIOS();else if(deferred){box.hidden=false;btn.hidden=false}install()},50)};
   $('installX').onclick=()=>{box.hidden=true;try{localStorage.setItem('wftm-install-x','1')}catch(e){}};
   addEventListener('appinstalled',()=>{box.hidden=true;link.hidden=true;toast('Installed — find it on your home screen')});
+})();
+
+/* ---------- daily word sign-up (each option appears only once it's set up) ---------- */
+const DAILY_CFG={
+  onesignalAppId:'',   // OneSignal App ID for phone notifications
+  emailForm:'',        // Brevo sign-up form link (email)
+  smsForm:'',          // Brevo sign-up form link (text message)
+  whatsapp:'',         // WhatsApp channel link
+  telegram:''          // Telegram channel link
+};
+(function(){
+  const C=DAILY_CFG,box=$('dailyBox');
+  const links=[['dEmail',C.emailForm],['dSms',C.smsForm],['dWa',C.whatsapp],['dTg',C.telegram]];
+  let any=false;links.forEach(([id,url])=>{if(url){$(id).href=url;$(id).hidden=false;any=true}});
+  if(!C.onesignalAppId){box.hidden=!any;return}
+  any=true;box.hidden=false;$('dPush').hidden=false;
+  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+  const note=m=>{$('dNote').textContent=m};
+  const setOn=on=>{$('dPush').setAttribute('aria-pressed',on);$('dPushT').textContent=on?'Notifications are on ✓':'Phone notification';$('dPushS').textContent=on?'You’ll get the word each morning':'A gentle alert from the app'};
+  let ready=null;
+  function load(){if(ready)return ready;ready=new Promise((res,rej)=>{window.OneSignalDeferred=window.OneSignalDeferred||[];
+    const s=document.createElement('script');s.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';s.defer=true;s.onerror=()=>rej(new Error('load'));document.head.appendChild(s);
+    OneSignalDeferred.push(async OS=>{try{await OS.init({appId:C.onesignalAppId,serviceWorkerPath:'word-for-this-moment/sw.js',serviceWorkerParam:{scope:'/word-for-this-moment/'}});
+      setOn(OS.Notifications.permission&&OS.User.PushSubscription.optedIn);OS.Notifications.addEventListener('permissionChange',p=>setOn(!!p));res(OS)}catch(e){rej(e)}})});return ready}
+  if(!(isIOS&&!standalone)&&'Notification' in window)load().catch(()=>{});
+  $('dPush').onclick=async()=>{
+    if(isIOS&&!standalone){note('On iPhone, first add this app to your Home Screen (Share → Add to Home Screen), then open it from there and tap this again.');return}
+    if(!('Notification' in window)){note('This browser can’t show notifications. Try email or Telegram instead.');return}
+    if(Notification.permission==='denied'){note('Notifications are blocked for this site. You can allow them in your phone or browser settings.');return}
+    note('One moment…');
+    try{const OS=await load();await OS.Notifications.requestPermission();if(OS.User.PushSubscription.optedIn===false)await OS.User.PushSubscription.optIn();
+      const on=OS.Notifications.permission;setOn(on);note(on?'Done — you’ll get the daily word each morning.':'Notifications weren’t turned on. You can try again any time.')}
+    catch(e){note('Notifications couldn’t be set up right now. Please check your connection and try again.')}
+  };
 })();
 </script>
 </body>

@@ -1,7 +1,9 @@
 /* Word for This Moment — service worker.
    Caches the app itself so it opens fast and works without signal.
    Only this site's own files are cached; visit counters and fonts always come from the network. */
-const CACHE = 'wftm-v3';
+// Phone notifications (OneSignal). Wrapped so the app still works offline if it can't load.
+try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}
+const CACHE = 'wftm-v4';
 const CORE = ['./', './index.html', './manifest.json'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));
