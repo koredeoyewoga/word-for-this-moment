@@ -1,0 +1,26 @@
+name: Daily word
+on:
+  schedule:
+    - cron: '0 6 * * *'
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node daily-word.mjs
+        env:
+          SCHEDULE: ${{ github.event.schedule }}
+          ONESIGNAL_APP_ID: ${{ secrets.ONESIGNAL_APP_ID }}
+          ONESIGNAL_API_KEY: ${{ secrets.ONESIGNAL_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+          BREVO_LIST_ID: ${{ secrets.BREVO_LIST_ID }}
+          BREVO_SENDER_EMAIL: ${{ secrets.BREVO_SENDER_EMAIL }}
+          BREVO_SMS_LIST_ID: ${{ secrets.BREVO_SMS_LIST_ID }}
+          BREVO_SMS_SENDER: ${{ secrets.BREVO_SMS_SENDER }}
